@@ -35,6 +35,7 @@ module.exports = {
   devtool: 'source-map',
   entry: {
     index: [path.join(scriptsDir, './index.js')],
+    index: [path.join(stylesDir, './index.scss')],
   },
   output: {
     filename: '[name].js',

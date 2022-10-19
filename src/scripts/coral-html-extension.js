@@ -6,14 +6,14 @@ class CoralScroll extends HTMLElement {
   constructor() {
     super()
 
-    const CoralScrollElement = this
-    const sliderElement = CoralScrollElement.querySelector('.coral-scroll__slider')
+    const coralScrollElement = this
+    const sliderElement = coralScrollElement.querySelector('.coral-scroll__slider')
     const firstSlideElement = sliderElement.querySelectorAll('.slide:not(.js-hidden)') ? sliderElement.querySelectorAll('.slide:not(.js-hidden)')[0] : null
-    const grabOverlayElement = CoralScrollElement.querySelector('.coral-scroll__grab-overlay')
-    const thumbsString = CoralScrollElement.dataset.thumbs
+    const grabOverlayElement = coralScrollElement.querySelector('.coral-scroll__grab-overlay')
+    const thumbsString = coralScrollElement.dataset.thumbs
     const thumbsParentElement = thumbsString ? document.querySelector('.is-thumbs-element') : null
-    const indicatorElement = CoralScrollElement.querySelector('.coral-scroll__indicator')
-    const arrowsElement = CoralScrollElement.querySelector('.coral-scroll__arrows')
+    const indicatorElement = coralScrollElement.querySelector('.coral-scroll__indicator')
+    const arrowsElement = coralScrollElement.querySelector('.coral-scroll__arrows')
     let intervalPaused = false
     let isDown = false
     let startX
@@ -28,13 +28,13 @@ class CoralScroll extends HTMLElement {
 
     // Config for this slider.
     const sliderConfig = {
-      devMode: CoralScrollElement.dataset.devMode ? CoralScrollElement.dataset.devMode === 'true' : false,
-      grabVelocity: CoralScrollElement.dataset.grabVelocity || 100,
-      autoScrollDuration: CoralScrollElement.dataset.autoScroll,
-      enableThumbs: CoralScrollElement.dataset.thumbs ? true : false,
-      infinite: CoralScrollElement.dataset.infiniteScroll === 'true' ? true : false,
+      devMode: coralScrollElement.dataset.devMode ? coralScrollElement.dataset.devMode === 'true' : false,
+      grabVelocity: coralScrollElement.dataset.grabVelocity || 100,
+      autoScrollDuration: coralScrollElement.dataset.autoScroll,
+      enableThumbs: coralScrollElement.dataset.thumbs ? true : false,
+      infinite: coralScrollElement.dataset.infiniteScroll === 'true' ? true : false,
       snapAlignStyle: firstSlideElement ? getComputedStyle(firstSlideElement)['scroll-snap-align'] : null,
-      pauseOnHover: CoralScrollElement.dataset.pauseOnHover === 'false' ? false : true, // Set default to true
+      pauseOnHover: coralScrollElement.dataset.pauseOnHover === 'false' ? false : true, // Set default to true
     }
 
     /**
@@ -45,7 +45,7 @@ class CoralScroll extends HTMLElement {
       sliderConfig.snapAlignStyle = refreshedFirstSlideElement ? getComputedStyle(refreshedFirstSlideElement)['scroll-snap-align'] : null
 
       if (sliderConfig.devMode) {
-        setDevMode(sliderConfig, CoralScrollElement)
+        setDevMode(sliderConfig, coralScrollElement)
       }
     }
 
@@ -57,7 +57,7 @@ class CoralScroll extends HTMLElement {
       window.addEventListener('resize', setDevMode)
 
       // Initial load
-      setDevMode(sliderConfig, CoralScrollElement)
+      setDevMode(sliderConfig, coralScrollElement)
     }
 
     const createDotElement = (index) => `<div class="dot" data-index="${index}"></div>`
@@ -223,7 +223,7 @@ class CoralScroll extends HTMLElement {
         sliderElement.classList.add('js-updating-slides')
         const allSlidesInScroll = sliderElement.querySelectorAll('.slide:not(.js-hidden):not(.js-clone)')
         const arrayAllSlidesInScroll = [...allSlidesInScroll]
-        const startPositionId = CoralScrollElement.dataset.startPositionId || 0
+        const startPositionId = coralScrollElement.dataset.startPositionId || 0
 
         // Clear all the dots.
         indicatorElement.innerHTML = ''
