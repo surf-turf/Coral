@@ -3,7 +3,7 @@
 </div>
 
 <h1 align="center">🪸 Coral 🪸<br></h1>
-<h2 align="center">Surf&Turf Custom Theme</h2>
+<h2 align="center">A slider extension for native CSS Snap Scroll</h2>
 <br>
 
 ## Instalation
