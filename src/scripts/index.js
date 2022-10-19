@@ -1,0 +1,1 @@
+import './coral-html-extension'

@@ -1,0 +1,27 @@
+.coral-scroll {
+  position: relative;
+  display: flex;
+  
+  &__slider {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  
+    display: flex;
+    overflow: scroll;
+    width: 100%;
+    scroll-snap-type: x mandatory;
+    
+    .slide {
+      overflow: hidden;
+      flex: 0 0 auto;
+      height: 100%;
+      scroll-snap-align: start;
+    }
+    
+    img {
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+}
