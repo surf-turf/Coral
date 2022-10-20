@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const extendersEntries = require('./extenders');
 const getPackageJson = require('../src/scripts/utils/getPackageJson.js');
 
 // Webpack plugins
@@ -34,8 +35,7 @@ module.exports = {
   mode: "production",
   devtool: 'source-map',
   entry: {
-    index: [path.join(scriptsDir, './index.js')],
-    index: [path.join(stylesDir, './index.scss')],
+    ...extendersEntries(),
   },
   output: {
     filename: '[name].js',
@@ -45,7 +45,7 @@ module.exports = {
     clean: true
   },
   optimization: {
-    minimize: true,
+    minimize: false,
     minimizer: [
       new TerserPlugin({ extractComments: false }),
       new CssMinimizerPlugin()
