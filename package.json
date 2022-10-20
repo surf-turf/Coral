@@ -1,6 +1,6 @@
 {
   "name": "@surf-turf/coral",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "A slider extension for native css snap scroll",
   "main": "lib/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "eslint ./src/ --fix",
     "trypublish": "npm publish || true"
   },
+  "sideEffects": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/surf-turf/coral.git"
