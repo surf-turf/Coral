@@ -39,7 +39,7 @@ Install the package using `yarn install` and import the JS and CSS
   <!-- end .coral-scroll__arrows -->
 
   <div class="coral-scroll__indicator">
-    <div class="dot" data-index="0"></div>
+    <button type="button" class="dot" data-index="0" aria-label="Select slide 0" name="Select slide 0"></button>
     <!-- end .dot -->
 
   </div>

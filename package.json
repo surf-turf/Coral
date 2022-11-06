@@ -1,6 +1,6 @@
 {
   "name": "@surf-turf/coral",
-  "version": "0.0.4",
+  "version": "0.0.8",
   "description": "A slider extension for native css snap scroll",
   "main": "lib/index.js",
   "scripts": {

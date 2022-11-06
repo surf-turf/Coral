@@ -23,7 +23,7 @@ class CoralScroll extends HTMLElement {
     const config = {
       attributes: false,
       childList: true,
-      subtree: false,
+      subtree: true,
     }
 
     // Config for this slider.
@@ -227,6 +227,7 @@ class CoralScroll extends HTMLElement {
       if (indicatorElement) {
         sliderElement.classList.add('js-updating-slides')
         const allSlidesInScroll = sliderElement.querySelectorAll('.slide:not(.js-hidden):not(.js-clone)')
+        const activeSlide = getCurrentSlideInView()
         const arrayAllSlidesInScroll = [...allSlidesInScroll]
         const startPositionId = coralScrollElement.dataset.startPositionId || 0
 
@@ -246,6 +247,12 @@ class CoralScroll extends HTMLElement {
         setScrollPosition(startPosition)
         setStylingArrows(startPosition)
         sliderElement.classList.remove('js-updating-slides')
+
+        // Set intial load
+        if (activeSlide.isSlideTheFirstSlide) {
+          coralScrollElement.classList.add('initial-load')
+        }
+
         const newIndicatorElement = coralScrollElement.querySelector('.coral-scroll__indicator')
 
         if (newIndicatorElement) {
@@ -292,6 +299,18 @@ class CoralScroll extends HTMLElement {
       return arrayAllSlidesInScroll[position]?.getAttribute('id')
     }
 
+    const setIndexInSlides = (currentSlides) => {
+      const allSlideElements = sliderElement.querySelectorAll('.slide:not(.js-hidden)')
+      const arrayOfAllSlideElements = allSlideElements ? [...allSlideElements] : null
+      const currentSlidePositions = currentSlides.currentSlidePositions
+
+      if (currentSlidePositions && currentSlidePositions.length > 0) {
+        currentSlidePositions.map((slide, index) => {
+          arrayOfAllSlideElements[index].dataset.slidePositionIndex = index
+        })
+      }
+    }
+
     const setActiveSlideClass = (activePosition) => {
       const allSlideElements = sliderElement.querySelectorAll('.slide:not(.js-hidden)')
       const arrayOfAllSlideElements = allSlideElements ? [...allSlideElements] : null
@@ -302,8 +321,8 @@ class CoralScroll extends HTMLElement {
         slideElement.classList.remove('js-active')
       })
 
-      if (arrayOfAllSlideElements.length > 0) {
-        arrayOfAllSlideElements[Number(activePosition)].classList.add('js-active')
+      if (arrayOfAllSlideElements && arrayOfAllSlideElements.length > 0) {
+        arrayOfAllSlideElements[Number(activePosition)]?.classList.add('js-active')
       }
     }
 
@@ -312,6 +331,8 @@ class CoralScroll extends HTMLElement {
      */
     const handleSetNewSlide = debounce(() => {
       const activeSlide = getCurrentSlideInView()
+
+      setIndexInSlides(activeSlide)
 
       setActiveSlideClass(activeSlide.activeSlide)
 
@@ -328,6 +349,11 @@ class CoralScroll extends HTMLElement {
       if (sliderConfig.infinite === true) {
         setClonesOfSlideForInifiteScroll()
       }
+
+      // Set intial load
+      if (activeSlide.isSlideTheFirstSlide) {
+        coralScrollElement.classList.add('initial-load')
+      }
     }, 100)
 
     /**
@@ -338,6 +364,8 @@ class CoralScroll extends HTMLElement {
 
       // Reset scroll duration so it doen't awkwardly scrolls to the next slide after you slided to the previous slide 1 second ago.
       intervalPaused = true
+
+      setIndexInSlides(currentSlide)
 
       setActiveSlideClass(currentSlide.activeSlide)
 
@@ -374,6 +402,9 @@ class CoralScroll extends HTMLElement {
           setScrollPositionWithoutScroll(Number(cloneId))
         }
       }
+
+      // Set intial load
+      coralScrollElement.classList.remove('initial-load')
     }, 50)
 
     /**
@@ -495,16 +526,17 @@ class CoralScroll extends HTMLElement {
         }
         // return indexOfClosestActiveSlide || 0
         const returnObject = {
-          // activePosition: activePosition,
           allSlideWidths: originalSlidePositions, // Including gap.
           currentSlidePositions: currentSlidePositions,
           // totalSlidesInView: totalSlidesInView,
           activeSlide: indexOfClosestActiveSlide,
+          isSlideTheFirstSlide: indexOfClosestActiveSlide === 0,
           isSlideTheSecondLastSlide: isSecondLastSlide,
           isSlideTheLastSlide: isLastSlide,
         }
 
         if (sliderConfig.devMode) {
+          console.log(sliderConfig)
           console.log(returnObject)
         }
 
@@ -534,7 +566,9 @@ class CoralScroll extends HTMLElement {
           const allSlideElements = sliderElement.querySelectorAll('.slide:not(.js-hidden):not(.js-clone)')
           const arrayOfAllSlideElements = allSlideElements ? [...allSlideElements] : null
 
-          sliderElement.dataset.clonesActive = 'true'
+          if (arrayOfAllSlideElements.length > 0) {
+            sliderElement.dataset.clonesActive = 'true'
+          }
           arrayOfAllSlideElements.map((slideElement, index) => {
             const cloneSlide = slideElement.cloneNode(true)
             cloneSlide.classList.add('js-clone')

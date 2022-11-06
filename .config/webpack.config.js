@@ -45,9 +45,9 @@ module.exports = {
     clean: true
   },
   optimization: {
-    minimize: false,
+    minimize: true,
     minimizer: [
-      new TerserPlugin({ extractComments: false }),
+      new TerserPlugin({ extractComments: true }),
       new CssMinimizerPlugin()
     ]
   },
