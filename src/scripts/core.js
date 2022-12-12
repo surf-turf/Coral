@@ -1,7 +1,7 @@
 /**
  * Coral Scroll Core
  */
-class CoralScrollCore {
+export class CoralScrollCore {
   constructor(coralScrollElement) {
     this.coralScrollElement = coralScrollElement
     this.sliderElement = coralScrollElement.querySelector('.coral-scroll__slider')
@@ -33,7 +33,21 @@ class CoralScrollCore {
    */
   #createDotElement = (index) => `<button type="button" class="dot" data-index="${index}" aria-label="Select slide ${index}" name="Select slide ${index}"></button>`
 
-  /**ina
+  /**
+   * Send event scrolled to new slide
+   * @param {number} newSlide 
+   */
+  sendEventScrolledToNewSlide = (newSlide) => {
+    const event = new CustomEvent('scrolled-to-slide', {
+      detail: {
+        activeSlide: newSlide,
+      },
+    })
+
+    document.dispatchEvent(event)
+  }
+
+  /**
    * Debounce function.
    *
    * @param {function} func
@@ -67,10 +81,9 @@ class CoralScrollCore {
       devMode: this.coralScrollElement.dataset.devMode ? this.coralScrollElement.dataset.devMode === 'true' : false,
       grabVelocity: this.coralScrollElement.dataset.grabVelocity || 100,
       // autoScrollDuration: coralScrollElement.dataset.autoScroll,
-      // enableThumbs: coralScrollElement.dataset.thumbs ? true : false,
-      // infinite: coralScrollElement.dataset.infiniteScroll === 'true' ? true : false,
+      enableThumbs: this.coralScrollElement.dataset.thumbs ? true : false,
+      infinite: this.coralScrollElement.dataset.infiniteScroll === 'true' ? true : false,
       snapAlignStyle: firstSlideElement ? getComputedStyle(firstSlideElement)['scroll-snap-align'] : null,
-      // pauseOnHover: coralScrollElement.dataset.pauseOnHover === 'false' ? false : true, // Set default to true
       startPositionId: this.coralScrollElement.dataset.startPositionId,
     }
   }
@@ -158,10 +171,6 @@ class CoralScrollCore {
           isLastSlide = lastSlidePosition - paddingRightValue === widthOfSliderElement / 2
           break
 
-        // case 'end':
-        //   isLastSlide = lastSlidePosition < 10 && lastSlidePosition > -10
-        //   break
-
         default:
           isLastSlide = lastSlidePosition === widthOfSliderElement
           break
@@ -169,10 +178,8 @@ class CoralScrollCore {
 
       // return indexOfClosestActiveSlide || 0
       const returnObject = {
-        // activePosition: activePosition,
         allSlideWidths: originalSlidePositions, // Including gap.
         currentSlidePositions: currentSlidePositions,
-        // totalSlidesInView: totalSlidesInView,
         activeSlide: indexOfClosestActiveSlide,
         isSlideTheSecondLastSlide: isSecondLastSlide,
         isSlideTheLastSlide: isLastSlide,
@@ -218,6 +225,43 @@ class CoralScrollCore {
             dotElement.classList.add('js-active')
           }
         }
+      })
+    }
+  }
+
+  /**
+   * Set active thumb
+   */
+  setActiveThumb = (activeSlidePostion) => {
+    const closestSectionElement = this.sliderElement.closest('section')
+    const allThumbsParentElements = closestSectionElement.querySelectorAll('.is-thumbs-element')
+
+    if (allThumbsParentElements.length >= 0) {
+      allThumbsParentElements.forEach((thumbsParentElement) => {
+        const allThumbsElement = thumbsParentElement.querySelectorAll('.slide')
+        const allSlideElements = this.sliderElement.querySelectorAll('.slide:not(.js-hidden)')
+        const arrayOfAllSlideElements = [...allSlideElements]
+
+        // Check if activeSlide is a clone.
+        const slideElement = arrayOfAllSlideElements[activeSlidePostion]
+        const isClone = slideElement?.classList.contains('js-clone')
+
+        allThumbsElement.forEach((thumbElement) => {
+          thumbElement.classList.remove('js-active')
+
+          if (isClone) {
+            const cloneId = slideElement.dataset.cloneId
+            const indexOfOriginalSlide = arrayOfAllSlideElements.findIndex((slideElement) => slideElement.dataset.slideId == cloneId)
+
+            if (Number(thumbElement.dataset.index) === Number(indexOfOriginalSlide)) {
+              thumbElement.classList.add('js-active')
+            }
+          } else {
+            if (Number(thumbElement.dataset.index) === Number(activeSlidePostion)) {
+              thumbElement.classList.add('js-active')
+            }
+          }
+        })
       })
     }
   }
@@ -360,10 +404,7 @@ class CoralScrollCore {
   getPositionOfSlideById = (slideId) => {
     const allSlideElements = this.sliderElement.querySelectorAll('.slide:not(.js-hidden)')
     const arrayOfAllSlideElements = [...allSlideElements]
-    const indexOfNewSlide = arrayOfAllSlideElements.findIndex((slideElement) => {
-
-      return slideElement.dataset.deeplinkTarget == slideId
-    })
+    const indexOfNewSlide = arrayOfAllSlideElements.findIndex((slideElement) => slideElement.dataset.deeplinkTarget == slideId)
 
     return indexOfNewSlide
   }
@@ -388,6 +429,7 @@ class CoralScrollCore {
     }
 
     this.setActiveIndicator(newActiveSlideIndex)
+    this.setActiveThumb(newActiveSlideIndex)
     this.setScrollPosition(newActiveSlideIndex)
     this.setStylingArrows(newActiveSlideIndex)
   }
@@ -409,12 +451,35 @@ class CoralScrollCore {
   }
 
   /**
+   * add Listener to the new dots.
+   */
+  setListenersToThumbs = () => {
+    if (this.sliderConfig.enableThumbs) {
+      const closestSectionElement = this.sliderElement.closest('section')
+      const thumbsParentElement = closestSectionElement.querySelector('.is-thumbs-element')
+
+      if (thumbsParentElement) {
+        const allThumbsElement = thumbsParentElement.querySelectorAll('.slide')
+        const arrayOfAllThumbs = [...allThumbsElement]
+
+        // Set event listener on thumb.
+        arrayOfAllThumbs?.map((thumbElement) => {
+          const newSlideIndex = thumbElement.dataset.index
+          thumbElement.addEventListener('click', () => {
+            this.setActiveIndicator(newSlideIndex)
+            this.setActiveThumb(newSlideIndex)
+            this.setScrollPosition(newSlideIndex)
+            this.setStylingArrows(newSlideIndex)
+          })
+        })
+      }
+    }
+  }
+
+  /**
    * Update slides.
    */
   updateSlides = () => {
-    const startPositionId = this.sliderConfig.startPositionId || 0
-    const startPosition = getPositionOfSlideById(startPositionId)
-
     this.sliderElement.classList.add('js-updating-slides')
 
     // Set new dots.
@@ -422,6 +487,9 @@ class CoralScrollCore {
 
     // Set styling arrows.
     this.setStylingArrows()
+
+    // Set clones of slide for infinite scroll.
+    this.setClonesOfSlideForInifiteScroll()
 
     // Set listners to the new dots.
     this.setListenersToTheDots()
@@ -434,7 +502,7 @@ class CoralScrollCore {
    */
   callback = this.debounce((mutationList) => {
     for (const mutation of mutationList) {
-      if (mutation.type === "childList") {
+      if (mutation.type === 'childList') {
         this.updateSlides()
       }
     }
@@ -449,7 +517,6 @@ class CoralScrollCore {
     if (indicatorElement) {
       const allSlidesInScroll = this.sliderElement.querySelectorAll('.slide:not(.js-hidden):not(.js-clone)')
       const arrayAllSlidesInScroll = [...allSlidesInScroll]
-      const startPositionId = this.coralScrollElement.dataset.startPositionId || 0
 
       // Clear all the dots.
       indicatorElement.innerHTML = ''
@@ -458,16 +525,31 @@ class CoralScrollCore {
       arrayAllSlidesInScroll.map((slide, index) => {
         indicatorElement.insertAdjacentHTML('beforeEnd', this.#createDotElement(index))
       })
-
-      // Get position of start position id.
-
-      // const startPosition = getPositionOfSlideById(  coralScrollElement, startPositionId)
-
-      // handleSetNewSlide()
-      // setScrollPosition(startPosition)
-      // setStylingArrows(startPosition)
     }
   }, 10)
+
+  setClonesOfSlideForInifiteScroll = () => {
+    if (this.sliderConfig.infinite === true) {
+      if (this.sliderElement.dataset.clonesActive !== 'true') {
+        const allSlideElements = this.sliderElement.querySelectorAll(
+          '.slide:not(.js-hidden):not(.js-clone)',
+        )
+        const arrayOfAllSlideElements = allSlideElements
+          ? [...allSlideElements]
+          : null
+
+        this.sliderElement.dataset.clonesActive = 'true'
+        arrayOfAllSlideElements.map((slideElement, index) => {
+          const cloneSlide = slideElement.cloneNode(true)
+          cloneSlide.classList.add('js-clone')
+          cloneSlide.dataset.cloneId = index
+
+          this.sliderElement.insertAdjacentElement('beforeend', cloneSlide)
+          slideElement.dataset.slideId = index
+        })
+      }
+    }
+  }
 
   /**
    * Handle previous slide.
@@ -482,18 +564,13 @@ class CoralScrollCore {
       newSlide -= 1
     }
 
-    const event = new CustomEvent('scrolled-to-slide', {
-      detail: {
-        activeSlide: newSlide,
-      },
-    })
-
-    // setActiveThumb(newSlide)
     this.setActiveIndicator(newSlide)
+    this.setActiveThumb(newSlide)
     this.setScrollPosition(newSlide)
     this.setStylingArrows(newSlide)
 
-    document.dispatchEvent(event)
+    // Send scrolled event.
+    this.sendEventScrolledToNewSlide(newSlide)
   }
 
   /**
@@ -501,44 +578,34 @@ class CoralScrollCore {
    */
   handleNextSlide = () => {
     const currentSliderStates = this.getCurrentSliderStates()
-    const totalSlides = this.sliderElement.querySelectorAll('.slide:not(.js-hidden)')
-
     let newSlide = currentSliderStates?.activeSlide
 
     if (currentSliderStates?.isSlideTheSecondLastSlide) {
-      if (this.sliderConfig.autoScrollDuration) {
-        if (this.sliderConfig.infinite === true) {
-          const allSlideElements = this.sliderElement.querySelectorAll('.slide:not(.js-hidden)')
-          const arrayOfAllSlideElements = allSlideElements ? [...allSlideElements] : null
-          const activeSlide = arrayOfAllSlideElements[newSlide]
-          const cloneId = activeSlide?.dataset.cloneId
+      if (this.sliderConfig.infinite === true) {
+        const allSlideElements = this.sliderElement.querySelectorAll('.slide:not(.js-hidden)')
+        const arrayOfAllSlideElements = allSlideElements ? [...allSlideElements] : null
+        const activeSlide = arrayOfAllSlideElements[newSlide]
+        const cloneId = activeSlide?.dataset.cloneId
 
-          setScrollPositionWithoutScroll(Number(cloneId))
+        this.setScrollPositionWithoutScroll(Number(cloneId))
 
-          newSlide = Number(cloneId) + 1
+        newSlide = Number(cloneId) + 1
 
-          // newSlide = 0
-        } else {
-          newSlide = 0
-        }
+        // newSlide = 0
       } else {
-        newSlide = totalSlides.length - 1
+        newSlide = 0
       }
     } else {
       newSlide += 1
     }
 
-    const event = new CustomEvent('scrolled-to-slide', {
-      detail: {
-        activeSlide: newSlide,
-      },
-    })
-
     this.setActiveIndicator(newSlide)
+    this.setActiveThumb(newSlide)
     this.setScrollPosition(newSlide)
     this.setStylingArrows(newSlide)
 
-    document.dispatchEvent(event)
+    // Send new slide event.
+    this.sendEventScrolledToNewSlide(newSlide)
   }
 
   /**
@@ -588,9 +655,14 @@ class CoralScrollCore {
     // Set lisntener arrows.
     this.setListenerArrows()
 
+    this.setClonesOfSlideForInifiteScroll()
+
     setTimeout(() => {
       // Set listener dots.
       this.setListenersToTheDots()
+
+      // Set listener to thumbs
+      this.setListenersToThumbs()
 
       // Set active indicator.
       this.setActiveIndicator(activeSlide)
@@ -605,33 +677,30 @@ class CoralScrollCore {
       } else {
         this.setActiveSlideClass(newSlide)
         this.setActiveIndicator(newSlide)
+        this.setActiveThumb(newSlide)
         this.setStylingArrows(newSlide)
       }
     }), 0)
 
-    // this.sliderElement.addEventListener('scroll', () =>
-    //   this.handleScroll(this.coralScrollElement, this.sliderConfig)
-    // )
-
     // Mouse down shows the overlay.
-    this.sliderElement.addEventListener("mousedown", () => {
+    this.sliderElement.addEventListener('mousedown', () => {
       this.showOverlay = true
     })
 
     // Mousemove over the slider. When the overlay is visible it will trigger an mousedown event ob the graboverlay element.
-    this.sliderElement.addEventListener("mousemove", (event) => {
+    this.sliderElement.addEventListener('mousemove', (event) => {
       if (this.showOverlay) {
-        this.grabOverlayElement?.classList.add("js-active")
-        const mouseEvent = new MouseEvent("mousedown", event)
+        this.grabOverlayElement?.classList.add('js-active')
+        const mouseEvent = new MouseEvent('mousedown', event)
 
         this.grabOverlayElement?.dispatchEvent(mouseEvent)
       }
     })
 
     // This will stop the overlay from showing when the mouse is up.
-    this.sliderElement.addEventListener("mouseup", () => {
-      const mouseEvent = new MouseEvent("mouseup")
-      this.grabOverlayElement?.classList.remove("js-active")
+    this.sliderElement.addEventListener('mouseup', () => {
+      const mouseEvent = new MouseEvent('mouseup')
+      this.grabOverlayElement?.classList.remove('js-active')
 
       this.grabOverlayElement?.dispatchEvent(mouseEvent)
 
@@ -639,14 +708,14 @@ class CoralScrollCore {
     })
 
     if (this.grabOverlayElement) {
-      this.grabOverlayElement.addEventListener("mousedown", (event) => {
+      this.grabOverlayElement.addEventListener('mousedown', (event) => {
         const allSlidesInScroll = this.sliderElement.querySelectorAll(
-          ".slide:not(.js-hidden)"
+          '.slide:not(.js-hidden)',
         )
         const arrayAllSlidesInScroll = [...allSlidesInScroll]
 
         this.isDown = true
-        this.sliderElement.classList.add("js-active")
+        this.sliderElement.classList.add('js-active')
         this.startX = event.pageX - this.sliderElement.offsetLeft
 
         arrayAllSlidesInScroll.map((slideElement) => {
@@ -658,19 +727,19 @@ class CoralScrollCore {
 
       const handleMouseUpAndOut = () => {
         this.isDown = false
-        this.grabOverlayElement.classList.remove("js-active")
+        this.grabOverlayElement.classList.remove('js-active')
         this.showOverlay = false
 
         setTimeout(() => {
-          this.sliderElement.classList.remove("js-active")
+          this.sliderElement.classList.remove('js-active')
         }, 1000)
       }
 
-      this.grabOverlayElement.addEventListener("mouseup", (event) =>
-        handleMouseUpAndOut(event)
+      this.grabOverlayElement.addEventListener('mouseup', (event) =>
+        handleMouseUpAndOut(event),
       )
 
-      this.grabOverlayElement.addEventListener("mousemove", (event) => {
+      this.grabOverlayElement.addEventListener('mousemove', (event) => {
         if (!this.isDown) return
         event.preventDefault()
 
@@ -680,13 +749,13 @@ class CoralScrollCore {
 
         if (walk >= -this.sliderConfig.grabVelocity && walk <= 0) {
           this.setScrollPosition(
-            currentSlide.activeSlide + 1
+            currentSlide.activeSlide + 1,
           )
         }
 
         if (walk >= this.sliderConfig.grabVelocity && walk >= 0) {
           this.setScrollPosition(
-            currentSlide.activeSlide - 1
+            currentSlide.activeSlide - 1,
           )
         }
       })
