@@ -49,6 +49,25 @@ Install the package using `yarn install` and import the JS and CSS
 <!-- end coral-scroll -->
 ```
 
+To connect the JS with the HTML you can use the CoralScrollCore class however you like.
+
+``` js
+class CoralScrollElement extends HTMLElement {
+  constructor() {
+    super()
+
+    const coralScrollElement = this
+
+    new CoralScrollCore(coralScrollElement)
+  }
+}
+
+// // Check if element is defined, if not define it..
+if (customElements.get('coral-scroll') === undefined) {
+  customElements.define('coral-scroll', CoralScrollElement)
+}
+```
+
 ## Coral scroll features
 
 ### Dev mode
