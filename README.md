@@ -7,7 +7,7 @@
 <br>
 
 ## Instalation
-Install the package using `yarn install` and import the JS and CSS
+Install the package using `yarn install @surf-turf/coral` and import the JS and CSS
 
 ``` scss 
 @import url('@surf-turf/coral/lib/coral-scroll.css');
